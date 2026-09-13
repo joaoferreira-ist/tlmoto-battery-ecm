@@ -56,7 +56,3 @@ future work.
 - Report MAE and RMSE for measured-versus-simulated voltage.
 - Add charge and regenerative-current operating modes.
 
-## License and data provenance
-
-Add a project license before publishing. Confirm the original battery dataset
-license and include its required citation before redistributing raw files.
