@@ -59,8 +59,10 @@ def simulate(current_a: np.ndarray, time_s: np.ndarray, parameters: ECMParameter
     soc_value, v1, v2 = initial_soc, 0.0, 0.0
     for index, (current_value, timestamp) in enumerate(zip(current, time)):
         dt = 0.0 if index == 0 else timestamp - time[index - 1]
-        v1 += (-v1 / (parameters.r1_ohm * parameters.c1_farads) + current_value / parameters.c1_farads) * dt
-        v2 += (-v2 / (parameters.r2_ohm * parameters.c2_farads) + current_value / parameters.c2_farads) * dt
+        decay_1 = np.exp(-dt/(parameters.r1_ohm * parameters.c1_farads))
+        decay_2 = np.exp(-dt/(parameters.r2_ohm * parameters.c2_farads))
+        v1 = v1 * decay_1 + current_value * parameters.r1_ohm * (1 - decay_1)
+        v2 = v2 * decay_2 + current_value * parameters.r2_ohm * (1 - decay_2)
         soc[index] = soc_value
         ocv[index] = ocv_from_soc(soc_value)
         transient_voltage[index] = v1 + v2
