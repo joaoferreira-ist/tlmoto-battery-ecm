@@ -35,6 +35,17 @@ def plot_result(result: SimulationResult, output_path: Path, measured_voltage: n
     plt.close(figure)
 
 
+def plot_error_graph(voltage_error: np.ndarray, output_path: Path, time: np.ndarray) -> None:
+    figure, axis = plt.subplots(figsize=(6, 4)) 
+    axis.plot(time, voltage_error, color="tab:red")
+    axis.set(xlabel="Time (s)", ylabel="Voltage (V)", title="Error between measured and simulated voltage")
+    axis.grid(True, alpha=0.3)
+    figure.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    figure.savefig(output_path, dpi=160)
+    plt.close(figure)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, help="Optional battery CSV for measured-voltage comparison")
@@ -50,7 +61,16 @@ def main() -> None:
         measured_voltage = None
         parameters = ECMParameters()
     result = simulate(current_a, time_s, parameters)
+    if measured_voltage is not None:
+        voltage_error = result.terminal_voltage_v - measured_voltage
+        mean_error = np.mean(voltage_error)
+        rsme = np.sqrt(np.mean(voltage_error**2))
+        print(f"Voltage RMSE: {rsme:.4f} V")
+        print(f"Voltage mean error: {mean_error:.4f}V")
+        print(f"1º valor da tensão medida é {measured_voltage[0]:.4f} V \n1º valor da tensão simulada é {result.terminal_voltage_v[0]:.4f} V \nDiferença absoluta entre os dois valores é {abs(measured_voltage[0] - result.terminal_voltage_v[0]):.4f} V")
+        plot_error_graph(voltage_error, args.output.parent / "voltage_error_graph_time.png", time_s)
     plot_result(result, args.output, measured_voltage)
+    
     print(f"Saved figure to {args.output}")
 
 
