@@ -49,7 +49,7 @@ def simulate(current_a: np.ndarray, time_s: np.ndarray, parameters: ECMParameter
         raise ValueError("current and time must be non-empty one-dimensional arrays of equal length")
     if np.any(np.diff(time) < 0):
         raise ValueError("time must be monotonically increasing")
-    if not 0.0 <= initial_soc <= 1.0:
+    if not 0.0 <= initial_soc <= 1.00:
         raise ValueError("initial SOC must be between 0 and 1")
 
     soc = np.empty_like(time)
@@ -68,4 +68,4 @@ def simulate(current_a: np.ndarray, time_s: np.ndarray, parameters: ECMParameter
         transient_voltage[index] = v1 + v2
         terminal_voltage[index] = ocv[index] - current_value * parameters.r0_ohm - transient_voltage[index]
         soc_value = update_soc(soc_value, current_value, dt, parameters.nominal_capacity_ah)
-    return SimulationResult(time, current, terminal_voltage, soc, ocv, transient_voltage)
+    return SimulationResult(time, current, terminal_voltage, soc, ocv, transient_voltage) 
