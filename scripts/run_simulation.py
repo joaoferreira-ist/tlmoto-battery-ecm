@@ -64,8 +64,8 @@ def main() -> None:
     if measured_voltage is not None:
         voltage_error = result.terminal_voltage_v - measured_voltage
         mean_error = np.mean(voltage_error)
-        rsme = np.sqrt(np.mean(voltage_error**2))
-        print(f"Voltage RMSE: {rsme:.4f} V")
+        rmse = np.sqrt(np.mean(voltage_error**2))
+        print(f"Voltage RMSE: {rmse:.4f} V")
         print(f"Voltage mean error: {mean_error:.4f}V")
         print(f"1º valor da tensão medida é {measured_voltage[0]:.4f} V \n1º valor da tensão simulada é {result.terminal_voltage_v[0]:.4f} V \nDiferença absoluta entre os dois valores é {abs(measured_voltage[0] - result.terminal_voltage_v[0]):.4f} V")
         plot_error_graph(voltage_error, args.output.parent / "voltage_error_graph_time.png", time_s)
