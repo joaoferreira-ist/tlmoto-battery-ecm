@@ -45,11 +45,48 @@ def plot_error_graph(voltage_error: np.ndarray, output_path: Path, time: np.ndar
     figure.savefig(output_path, dpi=160)
     plt.close(figure)
 
+def calibrate_soc(
+    current_a: np.ndarray,
+    time_s: np.ndarray,
+    measured_voltage: np.ndarray,
+    parameters: ECMParameters,
+    soc_min: float = 0.0,
+    soc_max: float = 1.0,
+    soc_step: float = 0.01,
+) -> tuple[float, SimulationResult, float]:
+    """Find the initial SOC that minimizes voltage RMSE for the measured trace."""
+    if measured_voltage.ndim != 1 or measured_voltage.size == 0:
+        raise ValueError("measured voltage must be a non-empty one-dimensional array")
+    if current_a.size != measured_voltage.size or time_s.size != measured_voltage.size:
+        raise ValueError("current, time, and measured voltage must have equal lengths")
+    if not 0.0 <= soc_min <= soc_max <= 1.0:
+        raise ValueError("SOC bounds must satisfy 0 <= soc_min <= soc_max <= 1")
+    if soc_step <= 0:
+        raise ValueError("soc_step must be positive")
+
+    candidate_soc = np.arange(soc_min, soc_max + soc_step / 2.0, soc_step)
+    best_soc = None
+    best_result = None
+    best_rmse = np.inf
+
+    for soc in candidate_soc:
+        candidate_result = simulate(current_a, time_s, parameters, initial_soc=float(soc))
+        error = candidate_result.terminal_voltage_v - measured_voltage
+        rmse = float(np.sqrt(np.mean(error**2)))
+        if rmse < best_rmse:
+            best_soc = float(soc)
+            best_result = candidate_result
+            best_rmse = rmse
+
+    return best_soc, best_result, best_rmse
 
 def main() -> None:
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, help="Optional battery CSV for measured-voltage comparison")
     parser.add_argument("--output", type=Path, default=ROOT / "results" / "figures" / "ecm_simulation.png")
+    parser.add_argument("--initial-soc", type=float, default=0.93, help="Initial SOC for the fixed simulation run")
+    parser.add_argument("--calibrate-soc", action="store_true", help="Fit the initial SOC from the measured data before plotting")
     args = parser.parse_args()
 
     if args.data:
@@ -61,7 +98,22 @@ def main() -> None:
         measured_voltage = None
         temperature_c = None
         parameters = ECMParameters()
-    result = simulate(current_a, time_s, parameters)
+
+    if measured_voltage is not None:
+        if args.calibrate_soc:
+            initial_soc, result, calibrated_rmse = calibrate_soc(
+                current_a, time_s, measured_voltage, parameters
+            )
+            print(f"Calibrated initial SOC: {initial_soc:.2f}")
+            print(f"Calibrated voltage RMSE: {calibrated_rmse:.4f} V")
+        else:
+            initial_soc = args.initial_soc
+            result = simulate(current_a, time_s, parameters, initial_soc=initial_soc)
+            print(f"Using fixed initial SOC: {initial_soc:.2f}")
+    else:
+        initial_soc = args.initial_soc
+        result = simulate(current_a, time_s, parameters, initial_soc=initial_soc)
+
     if measured_voltage is not None:
         voltage_error = result.terminal_voltage_v - measured_voltage
         mean_error = np.mean(voltage_error)
@@ -69,6 +121,7 @@ def main() -> None:
         print(f"Voltage RMSE: {rmse:.4f} V")
         print(f"Voltage mean error: {mean_error:.4f}V")
         print(f"1º valor da tensão medida é {measured_voltage[0]:.4f} V \n1º valor da tensão simulada é {result.terminal_voltage_v[0]:.4f} V \nDiferença absoluta entre os dois valores é {abs(measured_voltage[0] - result.terminal_voltage_v[0]):.4f} V")
+        print(f"Initial SOC used: {initial_soc:.4f}")
         plot_error_graph(voltage_error, args.output.parent / "voltage_error_graph_time.png", time_s)
     plot_result(result, args.output, measured_voltage)
     

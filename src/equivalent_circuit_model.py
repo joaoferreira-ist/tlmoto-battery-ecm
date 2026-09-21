@@ -10,7 +10,7 @@ from .ocv_soc import ocv_from_soc
 
 @dataclass(frozen=True)
 class ECMParameters:
-    """Electrical parameters for the equivalent circuit model."""
+    """Electrical parameters for the equivalent circuit model. Usually constant for the same cell"""
 
     nominal_capacity_ah: float = 1.6743
     r0_ohm: float = 0.02
@@ -22,7 +22,7 @@ class ECMParameters:
 
 @dataclass
 class SimulationResult:
-    """Time histories produced by :func:`simulate`."""
+    """Time histories produced by :func:`simulate`. Can variate for each test cycle"""
 
     time_s: np.ndarray
     current_a: np.ndarray
