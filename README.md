@@ -16,20 +16,18 @@ For a positive discharge current, the terminal voltage is modeled as:
 V_terminal = OCV(SOC) - I * R0 - V_RC1 - V_RC2
 ```
 
-The sample data uses negative current for discharge, so the loader converts it
-to the model's positive-discharge convention.
+The sample data uses negative current for discharge, so the loader converts it to the model's positive-discharge convention.
 
-## Quick start
-
-```powershell
+## Quick start (activate .venv before running)
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+python -m pytest
 python scripts/run_simulation.py
 python scripts/run_simulation.py --data dataresults/00001.csv --output results/figures/measured_comparison.png
 python -m pytest
 ```
 
-The simulation saves a four-panel diagnostic figure instead of requiring an
-interactive plotting window.
+The simulation saves a four-panel diagnostic figure instead of requiring an interactive plotting window.
 
 ## Project structure
 
@@ -44,10 +42,7 @@ results/                     Reproducible output location
 ## Limitations
 
 The included OCV curve and ECM parameters are demonstration values, not a
-calibrated representation of a particular cell. The measured comparison is
-therefore a workflow example rather than a model-accuracy claim. Temperature
-dependence, automatic parameter fitting, and formal validation metrics remain
-future work.
+calibrated representation of a particular cell. The measured comparison is therefore a workflow example rather than a model-accuracy claim Temperature dependence, automatic parameter fitting, and formal validation metrics remain future work.
 
 ## Future work
 

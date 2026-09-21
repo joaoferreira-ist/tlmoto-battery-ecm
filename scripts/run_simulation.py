@@ -10,7 +10,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.data import load_discharge_csv
+from src.data import load_battery_csv
 from src.equivalent_circuit_model import ECMParameters, SimulationResult, simulate
 
 
@@ -53,12 +53,13 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.data:
-        time_s, current_a, measured_voltage = load_discharge_csv(args.data)
+        time_s, current_a, measured_voltage, temperature_c = load_battery_csv(args.data)
         parameters = ECMParameters(nominal_capacity_ah=1.6743)
     else:
         time_s = np.arange(0.0, 3600.0 * 0.95, 1.0)
         current_a = np.full_like(time_s, 5.0)
         measured_voltage = None
+        temperature_c = None
         parameters = ECMParameters()
     result = simulate(current_a, time_s, parameters)
     if measured_voltage is not None:

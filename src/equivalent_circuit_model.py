@@ -12,7 +12,7 @@ from .ocv_soc import ocv_from_soc
 class ECMParameters:
     """Electrical parameters for the equivalent circuit model."""
 
-    nominal_capacity_ah: float = 5.0
+    nominal_capacity_ah: float = 1.6743
     r0_ohm: float = 0.02
     r1_ohm: float = 0.01
     c1_farads: float = 2000.0
