@@ -32,6 +32,7 @@ class SimulationResult:
     transient_voltage_v: np.ndarray
 
 
+"""Checks nominal capacity and RC parameters are positive"""
 def _validate_parameters(parameters: ECMParameters) -> None:
     if parameters.nominal_capacity_ah <= 0:
         raise ValueError("nominal capacity must be positive")
@@ -52,12 +53,13 @@ def simulate(current_a: np.ndarray, time_s: np.ndarray, parameters: ECMParameter
     if not 0.0 <= initial_soc <= 1.00:
         raise ValueError("initial SOC must be between 0 and 1")
 
-    soc = np.empty_like(time)
+
+    soc = np.empty_like(time)#this
     ocv = np.empty_like(time)
     terminal_voltage = np.empty_like(time)
     transient_voltage = np.empty_like(time)
     soc_value, v1, v2 = initial_soc, 0.0, 0.0
-    for index, (current_value, timestamp) in enumerate(zip(current, time)):
+    for index, (current_value, timestamp) in enumerate(zip(current, time)): 
         dt = 0.0 if index == 0 else timestamp - time[index - 1]
         decay_1 = np.exp(-dt/(parameters.r1_ohm * parameters.c1_farads))
         decay_2 = np.exp(-dt/(parameters.r2_ohm * parameters.c2_farads))
