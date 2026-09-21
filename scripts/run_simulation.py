@@ -1,4 +1,9 @@
-"""Run the battery ECM and save diagnostic figures."""
+"""Run the ECM simulation and save diagnostic plots.
+
+This script is the project entry point for both synthetic and measured data.
+It can either evaluate the model with a fixed initial SOC or search the best SOC
+for a measured cycle before generating the final plots.
+"""
 
 import argparse
 from pathlib import Path
@@ -15,6 +20,7 @@ from src.equivalent_circuit_model import ECMParameters, SimulationResult, simula
 
 
 def plot_result(result: SimulationResult, output_path: Path, measured_voltage: np.ndarray | None = None) -> None:
+    """Save the main four-panel diagnostic plot for the simulated battery cycle."""
     figure, axes = plt.subplots(2, 2, figsize=(12, 8))
     axes[0, 0].plot(result.time_s, result.terminal_voltage_v, label="Model")
     if measured_voltage is not None:
@@ -36,7 +42,8 @@ def plot_result(result: SimulationResult, output_path: Path, measured_voltage: n
 
 
 def plot_error_graph(voltage_error: np.ndarray, output_path: Path, time: np.ndarray) -> None:
-    figure, axis = plt.subplots(figsize=(6, 4)) 
+    """Save a time-series plot of the voltage error between model and measurement."""
+    figure, axis = plt.subplots(figsize=(6, 4))
     axis.plot(time, voltage_error, color="tab:red")
     axis.set(xlabel="Time (s)", ylabel="Voltage (V)", title="Error between measured and simulated voltage")
     axis.grid(True, alpha=0.3)
@@ -44,6 +51,7 @@ def plot_error_graph(voltage_error: np.ndarray, output_path: Path, time: np.ndar
     output_path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(output_path, dpi=160)
     plt.close(figure)
+
 
 def calibrate_soc(
     current_a: np.ndarray,
@@ -54,7 +62,11 @@ def calibrate_soc(
     soc_max: float = 1.0,
     soc_step: float = 0.01,
 ) -> tuple[float, SimulationResult, float]:
-    """Find the initial SOC that minimizes voltage RMSE for the measured trace."""
+    """Find the initial SOC that minimizes voltage RMSE for a measured trace.
+
+    This is a lightweight calibration step used to estimate the starting state of
+    the battery before the final model run is plotted.
+    """
     if measured_voltage.ndim != 1 or measured_voltage.size == 0:
         raise ValueError("measured voltage must be a non-empty one-dimensional array")
     if current_a.size != measured_voltage.size or time_s.size != measured_voltage.size:
@@ -80,8 +92,9 @@ def calibrate_soc(
 
     return best_soc, best_result, best_rmse
 
-def main() -> None:
 
+def main() -> None:
+    """Entry point for the simulation and calibration workflow."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, help="Optional battery CSV for measured-voltage comparison")
     parser.add_argument("--output", type=Path, default=ROOT / "results" / "figures" / "ecm_simulation.png")
@@ -120,11 +133,15 @@ def main() -> None:
         rmse = np.sqrt(np.mean(voltage_error**2))
         print(f"Voltage RMSE: {rmse:.4f} V")
         print(f"Voltage mean error: {mean_error:.4f}V")
-        print(f"1º valor da tensão medida é {measured_voltage[0]:.4f} V \n1º valor da tensão simulada é {result.terminal_voltage_v[0]:.4f} V \nDiferença absoluta entre os dois valores é {abs(measured_voltage[0] - result.terminal_voltage_v[0]):.4f} V")
+        print(
+            f"1º valor da tensão medida é {measured_voltage[0]:.4f} V "
+            f"\n1º valor da tensão simulada é {result.terminal_voltage_v[0]:.4f} V "
+            f"\nDiferença absoluta entre os dois valores é {abs(measured_voltage[0] - result.terminal_voltage_v[0]):.4f} V"
+        )
         print(f"Initial SOC used: {initial_soc:.4f}")
         plot_error_graph(voltage_error, args.output.parent / "voltage_error_graph_time.png", time_s)
     plot_result(result, args.output, measured_voltage)
-    
+
     print(f"Saved figure to {args.output}")
 
 
